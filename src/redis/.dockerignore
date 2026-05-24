@@ -1,0 +1,30 @@
+# Arquivos especificos do Docker que nao precisam estar na imagem
+Dockerfile
+.dockerignore
+
+# Bytecode do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+$py.class
+
+# Ambientes virtuais
+venv/
+env/
+.venv/
+
+# Arquivos de configuracao de IDE e caches
+.vscode/
+.idea/
+.pytest_cache/
+.mypy_cache/
+
+# Git
+.git
+.gitignore
+
+# Outros
+*.log
+*.swp
