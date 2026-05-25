@@ -1,0 +1,35 @@
+version: '3.9'
+services:
+# N8N
+  n8n:
+    build:
+      context: ./n8n
+      args:
+        WEBHOOK_URL: ${WEBHOOK_URL}
+        N8N_HOST: ${N8N_HOST}
+        GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
+        N8N_LOG_LEVEL: ${N8N_LOG_LEVEL}
+        N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE: "${N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE}"
+    image: v1mr/n8n:1.0.0
+    container_name: n8n
+    networks:
+      - evolution-net
+    restart: always
+    ports:
+      - 5678:5678
+    environment:
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      N8N_HOST: ${N8N_HOST}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE}
+      N8N_LOG_LEVEL: ${N8N_LOG_LEVEL}
+      N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE: "${N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE}"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+volumes:
+  n8n_data:
+  
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge
