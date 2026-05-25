@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Password or Token
+.env
+
+# AI Folder
+.llm/ 
+docs/
+logs/
+skills/
+
+# AI document
+AGENTS.md
