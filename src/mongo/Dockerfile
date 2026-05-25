@@ -1,0 +1,21 @@
+# Imagem base oficial do MongoDB
+FROM mongo:5.0
+
+# Copia script de inicializacao
+COPY init.js /docker-entrypoint-initdb.d/
+
+# Argumentos de build
+ARG MONGO_INITDB_ROOT_USERNAME
+ARG MONGO_INITDB_ROOT_PASSWORD
+ARG MONGO_INITDB_DATABASE
+
+# Variaveis de ambiente
+ENV MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+ENV MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+ENV MONGO_INITDB_DATABASE=${MONGO_INITDB_DATABASE}
+
+# Porta padrao
+EXPOSE 27017
+
+# Inicia o MongoDB
+CMD ["mongod"]
