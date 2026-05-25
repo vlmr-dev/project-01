@@ -1,0 +1,178 @@
+version: '3.9'
+services:
+# Database
+# Redis
+  redis:
+    build:
+      context: ./redis
+      args:
+        REDIS_USER: ${REDIS_USER}
+        REDIS_PASSWORD: ${REDIS_PASSWORD}
+    image: v1mr/redis:1.0.0
+    container_name: redis
+    networks:
+      - evolution-net
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $REDIS_PASSWORD ping | grep -q PONG || pgrep redis-server"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+# Redis Commander
+  redis-commander:
+    build: 
+      context: ./redis-commander
+      args:
+        REDIS_HOSTS: ${REDIS_HOSTS}
+        REDIS_PASSWORD: ${REDIS_PASSWORD}
+    image: v1mr/redis-commander:1.0.0
+    container_name: redis_commander
+    networks:
+      - evolution-net
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_HOSTS: ${REDIS_HOSTS}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}    
+    ports:
+      - "8081:8081"
+    restart: always    
+    depends_on:
+      redis:
+        condition: service_healthy
+# PostgreSQL
+  postgres:
+    build:
+      context: ./postgres
+      args:
+        POSTGRES_USER: ${POSTGRES_USER} 
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}                            
+        POSTGRES_HOST: ${POSTGRES_HOST}                             
+        POSTGRES_PORT: ${POSTGRES_PORT}
+        POSTGRES_DB: ${POSTGRES_DB}
+        POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD}"
+    image: v1mr/postgres:1.0.0
+    container_name: postgres
+    networks:
+      - evolution-net
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+# MongoDB
+  mongo:
+    build:
+      context: ./mongo
+      args:
+        MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+        MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+        MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+        WHATSAPP_ENABLED: "${WHATSAPP_ENABLED}"
+        MONGO_URI: ${MONGO_URI}
+        DATABASE_PROVIDER: ${DATABASE_PROVIDER}
+    image: v1mr/mongo:1.0.0
+    container_name: mongo
+    networks:
+      - evolution-net
+    restart: always
+    ports:    
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+      WHATSAPP_ENABLED: "${WHATSAPP_ENABLED}"
+      MONGO_URI: ${MONGO_URI}
+      DATABASE_PROVIDER: ${DATABASE_PROVIDER}
+    volumes:
+      - mongo_data:/data/db
+    expose:
+      - 27017
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+# Evolution-API  
+  evolution-api:
+    build:
+      context: ./evolution-api
+      args:
+        AUTHENTICATION_API_KEY: ${AUTHENTICATION_API_KEY}
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_DB: ${POSTGRES_DB}
+        POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD}"
+        POSTGRES_HOST: ${POSTGRES_HOST}
+        POSTGRES_PORT: ${POSTGRES_PORT}
+        DATABASE_PROVIDER: ${DATABASE_PROVIDER}
+        DATABASE_URL: ${DATABASE_URL}
+        DATABASE_CONNECTION_URI: ${DATABASE_CONNECTION_URI}
+    image: v1mr/evolution-api:1.0.0
+    container_name: evolution_api
+    networks:
+      - evolution-net
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      AUTHENTICATION_API_KEY: ${AUTHENTICATION_API_KEY}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_HOST_AUTH_METHOD: "${POSTGRES_HOST_AUTH_METHOD}"
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      DATABASE_PROVIDER: ${DATABASE_PROVIDER}
+      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_CONNECTION_URI: ${DATABASE_CONNECTION_URI}
+      CACHE_REDIS_ENABLED: "${CACHE_REDIS_ENABLED}"
+      CACHE_REDIS_URI: ${CACHE_REDIS_URI}
+      CACHE_REDIS_TTL: ${CACHE_REDIS_TTL}
+      CACHE_REDIS_PREFIX_KEY: ${CACHE_REDIS_PREFIX_KEY}
+      CACHE_REDIS_SAVE_INSTANCES: "${CACHE_REDIS_SAVE_INSTANCES}"
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_USER: ${REDIS_USER}
+    volumes:
+      - evolution_data:/evolution/instances
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    expose:
+      - 8080
+
+volumes:
+  redis_data:
+  postgres_data:
+  mongo_data:
+  evolution_data:
+  
+networks:
+  evolution-net:
+    name: evolution-net
+    driver: bridge
